@@ -23,10 +23,6 @@ jobs:
         id: install
       - name: Helm Package
         run: echo "PACKAGE_PATH=$(helm package . | awk '{print $NF}')" >> $GITHUB_ENV
-      - name: Publish Helm Chart
-        run: |
-          echo "${{ secrets.GITHUB_TOKEN }}" | helm registry login ghcr.io -u ${{ github.actor }} --password-stdin
-          helm push ${{ env.PACKAGE_PATH }} oci://ghcr.io/${{ github.repository_owner }}
       - name: Upload to chart repository
         run: |
           git config --global user.email "${{ github.event.repository.name }}@users.noreply.github.com"
@@ -46,3 +42,9 @@ jobs:
         uses: softprops/action-gh-release@v1
         with:
           files: ${{ env.PACKAGE_PATH }}
+      - name: Publish Helm Chart to OCI registry
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "$GITHUB_TOKEN" | helm registry login ghcr.io -u ${{ github.actor }} --password-stdin
+          helm push ${{ env.PACKAGE_PATH }} oci://ghcr.io/${{ github.repository_owner }}
